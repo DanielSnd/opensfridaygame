@@ -154,8 +154,21 @@ using System;
         [HideInInspector, NonSerialized]
         private Rigidbody2D _rigidbody2D;
 
-        /// <summary>
-        /// Gets the Rigidbody2D attached to the object.
-        /// </summary>
-        public new Rigidbody2D rigidbody2D { get { return _rigidbody2D ? _rigidbody2D : (_rigidbody2D = GetComponent<Rigidbody2D>()); } }
+    /// <summary>
+    /// Gets the Spriterenderer attached to the object.
+    /// </summary>
+    public new SpriteRenderer spriteRenderer {
+        get
+        {
+            return _spriteRenderer ? _spriteRenderer :
+                (_spriteRenderer = GetComponentInChildren<SpriteRenderer>());
+        } }
+
+    [HideInInspector, NonSerialized]
+    private SpriteRenderer _spriteRenderer;
+
+    /// <summary>
+    /// Gets the Rigidbody2D attached to the object.
+    /// </summary>
+    public new Rigidbody2D rigidbody2D { get { return _rigidbody2D ? _rigidbody2D : (_rigidbody2D = GetComponent<Rigidbody2D>()); } }
     }
