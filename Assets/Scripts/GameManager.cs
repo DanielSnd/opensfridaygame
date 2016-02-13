@@ -20,12 +20,21 @@ public class GameManager : MonoBehaviour {
     /// <summary>
     /// Player prefab to spawn.
     /// </summary>
-    public Actor playerPrefab;
+    public ActorPlayer playerPrefab;
+
+    public ActorEnemy enemyPrefab;
 
     /// <summary>
     /// Dictionary of usernames versus player actor objects.
     /// </summary>
-    public Dictionary<string,Actor> playerDictionary = new Dictionary<string, Actor>();
+    public static Dictionary<string, ActorPlayer> playerDictionary = new Dictionary<string, ActorPlayer>();
+
+    /// <summary>
+    /// Dictionary of usernames versus enemy actor objects.
+    /// </summary>
+    public static Dictionary<string, ActorEnemy> enemyDictionary = new Dictionary<string, ActorEnemy>();
+    
+    public const int alphabettotal = 25;
 
     /// <summary>
     /// Awake gets called when the object is spawned into the scene.
@@ -34,6 +43,27 @@ public class GameManager : MonoBehaviour {
     {
         //Set our singleton to be this object.
         get = this;
+    }
+
+    public Actor SpawnEnemy()
+    {
+        //Spawn Player Object.
+        ActorEnemy spawnedPlayer = enemyPrefab.Spawn();
+
+        //Set position.
+        spawnedPlayer.currentPosition = BoardMethod.GetRandomTile();
+        Tile emptyTile = BoardMethod.GetTile(spawnedPlayer.currentPosition);
+        spawnedPlayer.transform.position = emptyTile.transform.position;
+
+        spawnedPlayer.spriteRenderer.color = Color.red;
+
+        //Set username.
+        spawnedPlayer.actorName = GetEnemyName();
+        
+        //Add to dictionary so we can reference it later by username.
+        enemyDictionary.Add(spawnedPlayer.actorName, spawnedPlayer);
+
+        return spawnedPlayer;
     }
 
     /// <summary>
@@ -51,12 +81,14 @@ public class GameManager : MonoBehaviour {
         }
         
         //Spawn Player Object.
-        Actor spawnedPlayer = playerPrefab.Spawn();
+        ActorPlayer spawnedPlayer = playerPrefab.Spawn();
 
         //Set position.
-        spawnedPlayer.currentPosition = BoardManager.get.GetRandomEmptyFloor();
-        Tile emptyTile = BoardManager.get.GetTile(spawnedPlayer.currentPosition);
+        spawnedPlayer.currentPosition = BoardMethod.GetRandomTile();
+        Tile emptyTile = BoardMethod.GetTile(spawnedPlayer.currentPosition);
         spawnedPlayer.transform.position = emptyTile.transform.position;
+
+        spawnedPlayer.spriteRenderer.color = Color.white;
 
         //Set username.
         spawnedPlayer.actorName = username;
@@ -65,5 +97,48 @@ public class GameManager : MonoBehaviour {
         playerDictionary.Add(username,spawnedPlayer);
         
         return spawnedPlayer;
+    }
+
+    char RandomLetter()
+    {
+        int letterNum = Random.Range(0, alphabettotal+1);
+        return (char) ('a' + letterNum);
+    }
+
+    string GetEnemyName()
+    {
+        for (int i = 0; i < 10; i++)
+        {
+            string randomName = "#" + RandomLetter() + RandomLetter() + RandomLetter();
+            if (!enemyDictionary.ContainsKey(randomName)) return randomName;
+        }
+        return "#" + RandomLetter() + RandomLetter() + RandomLetter();
+    }
+
+    public static void ResetAll()
+    {
+        if (BoardManager.mapTiles != null && BoardManager.mapTiles.Length>0)
+        {
+            foreach (Tile _tile in BoardManager.mapTiles)
+            {
+                if (_tile != null)
+                {
+                    _tile.Recycle();
+                }
+            }
+        }
+        if (Actor.actorList.Count > 0)
+        {
+            foreach (Actor _actor in Actor.actorList)
+            {
+                if (_actor != null)
+                {
+                    _actor.Recycle();
+                }
+            }
+        }
+        Actor.actorList.Clear();
+        enemyDictionary.Clear();
+        playerDictionary.Clear();
     }
 }

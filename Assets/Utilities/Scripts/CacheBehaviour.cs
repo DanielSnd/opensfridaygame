@@ -154,6 +154,14 @@ using System;
         [HideInInspector, NonSerialized]
         private Rigidbody2D _rigidbody2D;
 
+    [HideInInspector, NonSerialized]
+    private TextMesh _textMesh;
+
+    /// <summary>
+    /// Gets the Rigidbody2D attached to the object.
+    /// </summary>
+    public new TextMesh textMesh { get { return _textMesh ? _textMesh : (_textMesh = GetComponentInChildren<TextMesh>()); } }
+
     /// <summary>
     /// Gets the Spriterenderer attached to the object.
     /// </summary>
@@ -163,6 +171,8 @@ using System;
             return _spriteRenderer ? _spriteRenderer :
                 (_spriteRenderer = GetComponentInChildren<SpriteRenderer>());
         } }
+
+
 
     [HideInInspector, NonSerialized]
     private SpriteRenderer _spriteRenderer;

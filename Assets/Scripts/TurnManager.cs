@@ -1,5 +1,9 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Xml;
+using DG.Tweening;
 using UnityEngine.UI;
 
 /// <summary>
@@ -24,11 +28,16 @@ public class TurnManager : MonoBehaviour {
 
     /// We store the last turn time here and check for it on Update.
     float lastTurnTime;
-
+    
     /// <summary>
     /// Stores Turn Duration
     /// </summary>
     public float turnDuration = 25;
+
+    /// <summary>
+    /// Store the Text reference that shows time left visually
+    /// </summary>
+    public Text timeLeftText;
 
     /// <summary>
     /// We use these images to show the turn duration visually.
@@ -51,6 +60,11 @@ public class TurnManager : MonoBehaviour {
         lastTurnTime = Time.realtimeSinceStartup;
     }
 
+    void Start()
+    {
+        timeLeftText.transform.DOScale(Vector3.one*1.1f, 0.45f).SetLoops(-1, LoopType.Yoyo);
+    }
+
     /// <summary>
     /// Update is called every frame.
     /// </summary>
@@ -60,7 +74,11 @@ public class TurnManager : MonoBehaviour {
         //We're using 2 images with opposite directions so they both shrink towards the center.
         turnCountdownBar1.fillAmount = Mathf.Clamp(1-(Time.realtimeSinceStartup - lastTurnTime)/turnDuration, 0, 1);
         turnCountdownBar2.fillAmount = Mathf.Clamp(1-(Time.realtimeSinceStartup - lastTurnTime) / turnDuration, 0, 1);
-        
+
+        int secondsLeft = Mathf.CeilToInt(turnDuration - (Time.realtimeSinceStartup - lastTurnTime));
+
+        timeLeftText.text = secondsLeft.ToString() + " seconds left";
+
         //Check if we should do a turn tick now
         if (CanDoTick())
         {
@@ -87,13 +105,23 @@ public class TurnManager : MonoBehaviour {
         //Debug log so we can see the tick happening on the Console.
         Debug.Log("DO TICK");
 
+        StartCoroutine(DOTick());
+    }
+
+    IEnumerator DOTick()
+    {
         //We update our last turn time reference with the current time.
         lastTurnTime = Time.realtimeSinceStartup;
 
+        TwitchController.usersVotedThisTurn.Clear();
+
+        List<Actor> tickList = Actor.actorList.OrderByDescending(x => x.priority).ToList();
+
         //We go over every actor currently in the board and ask them to Tick.
-        for (int i = Actor.actorList.Count - 1; i >= 0; i--)
+        for (int i = tickList.Count - 1; i >= 0; i--)
         {
-            Actor.actorList[i].Tick();
+            tickList[i].Tick();
+            yield return new WaitForSeconds(tickList[i].priority == 0 ? 0.3f : 0.1f);
         }
     }
 }

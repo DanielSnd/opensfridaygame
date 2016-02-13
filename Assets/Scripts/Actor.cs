@@ -2,6 +2,8 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using DG.Tweening;
 using UnityEngine.UI;
 
 /// <summary>
@@ -26,6 +28,13 @@ public class Actor : CacheBehaviour
     /// Current position this actor is occupying on the board.
     /// </summary>
     public TilePosition currentPosition;
+
+    public Image healthBar;
+
+    public int maxHealth = 10;
+    public int currentHealth;
+    public int baseDamage = 1;
+    public int priority = 0;
 
     //Actor's name reference
     private string _name;
@@ -79,6 +88,10 @@ public class Actor : CacheBehaviour
     public virtual void OnEnable()
     {
         if (!actorList.Contains(this)) actorList.Add(this);
+
+        transform.localScale = Vector3.one;
+        currentHealth = maxHealth;
+        UpdateHealthBar();
     }
 
     /// <summary>
@@ -97,13 +110,74 @@ public class Actor : CacheBehaviour
     {
         //DO STUFF
         Debug.Log(actorName + " TICK! "+nextCommand.ToString());
-        if (nextCommand != Commands.None)
+        if (nextCommand != Commands.None && currentHealth>0)
         {
             // Let's attempt to move in that direction
-            bool attemptToMove = BoardManager.get.TryMove(this, nextCommand);
+            bool attemptToMove = BoardManager.get.TryCommand(this, nextCommand);
         }
 
         //Reset next command to none after using the next command.
         nextCommand = Commands.None;
+        UpdateHealthBar();
+    }
+
+    public void Attack(Actor _victim)
+    {
+        StartCoroutine(DOAttack(_victim));
+    }
+
+    IEnumerator DOAttack(Actor _victim)
+    {
+        spriteRenderer.transform.DOKill();
+        Sequence attackSequence = DOTween.Sequence();
+        Tween moveToEnemy = spriteRenderer.transform.DOMove(_victim.transform.position, 0.15f);
+        Tween moveBack = spriteRenderer.transform.DOLocalMove(Vector3.zero, 0.15f);
+        attackSequence.Append(moveToEnemy).Append(moveBack);
+        yield return moveToEnemy.WaitForCompletion();
+        _victim.TakeDamage(baseDamage);
+        yield return moveBack.WaitForCompletion();
+        spriteRenderer.transform.localPosition = Vector3.zero;
+    }
+
+    public void TakeDamage(int damage)
+    {
+        currentHealth -= damage;
+
+        spriteRenderer.transform.DOKill();
+        ResetScale();
+        spriteRenderer.transform.DOPunchPosition(Vector3.one*1.5f, 0.5f);
+
+        if (currentHealth <= 0)
+        {
+            Die();
+        }
+        UpdateHealthBar();
+    }
+
+    public void ResetScale()
+    {
+        spriteRenderer.transform.localScale = Vector3.one;
+    }
+
+    public void Die()
+    {
+        if (GameManager.enemyDictionary.ContainsKey(actorName)) GameManager.enemyDictionary.Remove(actorName);
+        if (GameManager.playerDictionary.ContainsKey(actorName)) GameManager.playerDictionary.Remove(actorName);
+        if (actorList.Contains(this)) actorList.Remove(this);
+
+        StartCoroutine(DODie());
+    }
+    
+    public IEnumerator DODie()
+    {
+        transform.DOKill();
+        Tween dieTween = transform.DOScale(Vector3.zero, 0.5f);
+        yield return dieTween.WaitForCompletion();
+        this.Recycle();
+    }
+
+    public void UpdateHealthBar()
+    {
+        healthBar.fillAmount = 1-((float)currentHealth/ (float)maxHealth);
     }
 }
