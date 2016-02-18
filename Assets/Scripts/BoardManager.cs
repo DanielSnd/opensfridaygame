@@ -115,11 +115,11 @@ public class BoardManager : MonoBehaviour
                 map[x, y] = TType.Wall;
             }
         }
-        
+
         //Go over the whole map and spawn tiles, and assign the tile values based on the map.
-        for (int y = 0; y < map.GetLength(0); y++)
+        for (int x = 0; x < map.GetLength(0); x++)
         {
-            for (int x = 0; x < map.GetLength(1); x++)
+            for (int y = 0; y < map.GetLength(1); y++)
             {
                 Tile _tileref = testTile.Spawn();
                 mapTiles[x, y] = _tileref;

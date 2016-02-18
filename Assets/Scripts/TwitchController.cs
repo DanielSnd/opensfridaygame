@@ -19,14 +19,15 @@ public class TwitchController : MonoBehaviour {
     {
         //Get IRC component and register to receive messages from it.
         IRC = this.GetComponent<TwitchIRC>();
-        IRC.messageRecievedEvent.AddListener(OnChatMsgRecieved);
+        IRC.StartIRC();
+        IRC.messageReceivedEvent.AddListener(OnChatMsgReceived);
     }
 
     /// <summary>
     /// This method will be called by IRC UnityEvent messageRecievedEvent
     /// </summary>
     /// <param name="msg">long ugly message with unnecessary stuff</param>
-    void OnChatMsgRecieved(string msg)
+    void OnChatMsgReceived(string msg)
     {
         //Parse the message received and separate it's pieces.
         int msgIndex = msg.IndexOf("PRIVMSG #");
